@@ -46,7 +46,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }
       onClose();
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unknown error occurred');
+      }
     } finally {
       setLoading(false);
     }
