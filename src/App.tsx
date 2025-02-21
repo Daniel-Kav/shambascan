@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+
 import { Home, Leaf, History, BookOpen, HelpCircle, Menu, LogIn } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
-import { Scanner } from './components/Scanner';
+import { Scanner } from './components/Scanner'
+import { Auth } from './components/Auth';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-function App() {
+function AppContent() {
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  if (!user) {
+    return <Auth />;
+  }
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: Home },
@@ -67,9 +75,12 @@ function App() {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <button
+              onClick={signOut}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
               <LogIn className="w-4 h-4" />
-              Login
+              Logout
             </button>
           </div>
         </header>
@@ -111,7 +122,7 @@ function App() {
               <Dashboard />
             </div>
           )}
-          {activeTab === 'scanner' && <Scanner />}
+          {activeTab === 'scanner' && <Scanner user={user} />}
           {activeTab === 'history' && <div className="p-6">Analysis History coming soon</div>}
           {activeTab === 'guide' && <div className="p-6">Guide & Help coming soon</div>}
         </main>
@@ -120,4 +131,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
