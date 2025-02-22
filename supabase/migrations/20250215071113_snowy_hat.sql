@@ -4,25 +4,30 @@
   1. Authentication and Users
     - Extends default auth.users with profiles table
     - Adds role-based access control
-    
+
   2. Scan History
     - Stores plant disease scan results
     - Links to users
-    
+
   3. Educational Content
     - Stores disease information and treatments
     - Manages educational resources
-    
+
   4. Chat History
     - Stores AI chat interactions
-    
+
   5. Security
     - Enables RLS on all tables
     - Sets up appropriate access policies
 */
 
 -- Create custom types
-CREATE TYPE user_role AS ENUM ('farmer', 'researcher', 'admin');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE user_role AS ENUM ('farmer', 'researcher', 'admin');
+  END IF;
+END $$;
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS profiles (
@@ -39,9 +44,15 @@ CREATE TABLE IF NOT EXISTS scans (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   image_url text NOT NULL,
+  scan_name text NOT NULL,
   disease_name text,
   confidence_score float,
+  quality_score float,
+  scan_time float,
+  description text,
+  severity text,
   treatment_recommendation text,
+  preventive_measures text,
   created_at timestamptz DEFAULT now()
 );
 
