@@ -73,11 +73,11 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Quality Score</p>
-                  <div className="flex">{renderStars(scan.quality_score)}</div>
+                  <div className="flex">{renderStars(scan.quality_score || 0)}</div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Scan Time</p>
-                  <p className="font-medium">{scan.scan_time.toFixed(2)}s</p>
+                  <p className="font-medium">{(scan.scan_time || 0).toFixed(2)}s</p>
                 </div>
               </div>
             </div>
@@ -90,20 +90,20 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-500">Disease Name</p>
-                    <p className="font-medium">{scan.disease_name}</p>
+                    <p className="font-medium">{scan.disease_name || 'Not detected'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Confidence Score</p>
-                    <div className="flex">{renderStars(scan.confidence_score)}</div>
+                    <div className="flex">{renderStars(scan.confidence_score || 0)}</div>
                   </div>
                 </div>
                 <div className="mb-4">
                   <p className="text-sm text-gray-500">Description</p>
-                  <p className="mt-1">{scan.description}</p>
+                  <p className="mt-1">{scan.description || 'No description available'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Severity</p>
-                  <p className="mt-1">{scan.severity}</p>
+                  <p className="mt-1">{scan.severity || 'Not specified'}</p>
                 </div>
               </div>
             </div>
@@ -113,11 +113,11 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="mb-4">
                   <p className="text-sm text-gray-500">Treatment Recommendation</p>
-                  <p className="mt-1">{scan.treatment_recommendation}</p>
+                  <p className="mt-1">{scan.treatment_recommendation || 'No treatment recommendations available'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Preventive Measures</p>
-                  <p className="mt-1">{scan.preventive_measures}</p>
+                  <p className="mt-1">{scan.preventive_measures || 'No preventive measures available'}</p>
                 </div>
               </div>
             </div>
