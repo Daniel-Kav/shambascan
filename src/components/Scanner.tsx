@@ -5,6 +5,7 @@ import { analyzePlantImage, PlantAnalysis } from '../lib/gemini';
 import toast from 'react-hot-toast';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { insertScanData } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 interface ScannerProps {
   user: any;
@@ -54,6 +55,7 @@ export function Scanner({ user }: ScannerProps) {
 
         // Convert image to base64
         const reader = new FileReader();
+        const startTime = Date.now();
         reader.onload = async () => {
           const base64String = reader.result as string;
           
@@ -71,12 +73,15 @@ export function Scanner({ user }: ScannerProps) {
               const { error: scanError } = await insertScanData({
                 user_id: user.id,
                 image_url: imageUrl,
+                scan_name: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
+                scan_time: (Date.now() - startTime) / 1000, // Convert to seconds
+                quality_score: analysis.confidence, // Using confidence as quality score for now
                 disease_name: analysis.disease,
                 confidence_score: analysis.confidence,
                 severity: analysis.severity,
                 description: analysis.description,
                 treatment_recommendation: analysis.treatment,
-                preventive_measures: analysis.preventiveMeasures,
+                preventive_measures: analysis.preventiveMeasures.join('. '),
               });
 
               if (scanError) {
