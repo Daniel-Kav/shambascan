@@ -37,6 +37,9 @@ export async function handleDatabaseOperation<T>(
 export async function insertScanData(scanData: {
   user_id: string;
   image_url: string;
+  scan_name: string;
+  scan_time: number;
+  quality_score: number;
   disease_name: string;
   confidence_score: number;
   severity: string;
@@ -47,9 +50,8 @@ export async function insertScanData(scanData: {
   return handleDatabaseOperation(() =>
     supabaseClient
       .from('scans')
-      .insert(scanData)
+      .insert([scanData])
       .select()
-      .single()
   );
 }
 
