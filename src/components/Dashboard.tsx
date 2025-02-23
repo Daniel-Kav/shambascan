@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Leaf, Activity, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { DashboardStats } from '../types';
+import { ScanHistory } from './ScanHistory';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string; value: number | string; icon: React.ElementType }) => (
   <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -25,9 +26,15 @@ export function Dashboard() {
     activePlants: 0,
     detectedDiseases: 0
   });
-  const [scanActivity, setScanActivity] = useState([]);
+  const [scanActivity, setScanActivity] = useState<{ name: string; scans: number }[]>([]);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
     async function fetchDashboardData() {
       try {
         // Fetch total scans
@@ -53,7 +60,7 @@ export function Dashboard() {
 
         setStats({
           totalScans: totalScans || 0,
-          successRate: totalScans ? (successfulScans / totalScans) * 100 : 0,
+          successRate: totalScans ? ((successfulScans || 0) / totalScans) * 100 : 0,
           activePlants: activeUsers || 0,
           detectedDiseases: uniqueDiseases || 0
         });
@@ -65,7 +72,7 @@ export function Dashboard() {
           .order('created_at', { ascending: true });
 
         // Process activity data for the chart
-        const processedActivity = processActivityData(activityData);
+        const processedActivity = processActivityData(activityData || []);
         setScanActivity(processedActivity);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -75,9 +82,17 @@ export function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  function processActivityData(data) {
+  function processActivityData(data: { created_at: string }[]): { name: string; scans: number }[] {
     // Group scans by month
-    const monthlyData = data.reduce((acc, scan) => {
+    interface Scan {
+      created_at: string;
+    }
+
+    interface MonthlyData {
+      [key: string]: number;
+    }
+
+    const monthlyData: MonthlyData = data.reduce((acc: MonthlyData, scan: Scan) => {
       const month = new Date(scan.created_at).toLocaleString('default', { month: 'short' });
       acc[month] = (acc[month] || 0) + 1;
       return acc;
@@ -91,26 +106,35 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Total Scans" value={stats.totalScans} icon={Leaf} />
-        <StatCard title="Success Rate" value={`${stats.successRate.toFixed(1)}%`} icon={Activity} />
-        <StatCard title="Active Users" value={stats.activePlants} icon={Users} />
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Total Scans" value={stats.totalScans} icon={Activity} />
+        <StatCard title="Success Rate" value={`${stats.successRate}%`} icon={Activity} />
+        <StatCard title="Active Plants" value={stats.activePlants} icon={Leaf} />
+        <StatCard title="Detected Diseases" value={stats.detectedDiseases} icon={Users} />
       </div>
 
+      {/* Activity Chart */}
       <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Scan Activity</h3>
-        <div className="h-80">
+        <h2 className="text-lg font-semibold mb-4">Scan Activity</h2>
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={scanActivity}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="scans" fill="#22c55e" />
+              <Bar dataKey="scans" fill="#059669" />
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Scan History Section */}
+      <div className="bg-white rounded-xl shadow-sm">
+        <h2 className="text-lg font-semibold p-6 border-b">Analysis History</h2>
+        {user && <ScanHistory user={user} />}
       </div>
     </div>
   );
