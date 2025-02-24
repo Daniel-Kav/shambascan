@@ -3,7 +3,6 @@ import { format } from 'date-fns';
 
 interface Scan {
   id: string;
-  scan_name: string;
   image_url: string;
   quality_score: number;
   scan_time: number;
@@ -55,11 +54,11 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
           <div className="flex items-start space-x-6">
             <img
               src={scan.image_url}
-              alt={scan.scan_name}
+              // alt={scan.scan_name}
               className="w-48 h-48 object-cover rounded-lg"
             />
             <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-2">{scan.scan_name}</h1>
+              <h1 className="text-2xl font-bold mb-2">{scan.description}</h1>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Scan ID</p>
@@ -73,7 +72,7 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Quality Score</p>
-                  <div className="flex">{renderStars(scan.quality_score || 0)}</div>
+                  <div className="flex">{renderStars(scan.confidence_score || 0)}</div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Scan Time</p>
