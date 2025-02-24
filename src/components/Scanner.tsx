@@ -73,9 +73,7 @@ export function Scanner({ user }: ScannerProps) {
               const { error: scanError } = await insertScanData({
                 user_id: user.id,
                 image_url: imageUrl,
-                scan_name: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
                 scan_time: (Date.now() - startTime) / 1000, // Convert to seconds
-                quality_score: analysis.confidence, // Using confidence as quality score for now
                 disease_name: analysis.disease,
                 confidence_score: analysis.confidence,
                 severity: analysis.severity,
