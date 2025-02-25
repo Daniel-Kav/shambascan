@@ -73,7 +73,6 @@ export function Scanner({ user }: ScannerProps) {
               const { error: scanError } = await insertScanData({
                 user_id: user.id,
                 image_url: imageUrl,
-                scan_time: (Date.now() - startTime) / 1000, // Convert to seconds
                 disease_name: analysis.disease,
                 confidence_score: analysis.confidence,
                 severity: analysis.severity,
