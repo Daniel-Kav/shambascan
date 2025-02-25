@@ -10,6 +10,6 @@ export interface ScanResult {
 export interface DashboardStats {
   totalScans: number;
   successRate: number;
-  activePlants: number;
+  ScannedPlants: number;
   detectedDiseases: number;
 }
