@@ -5,6 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { Scanner } from './components/Scanner'
 import { Auth } from './components/Auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ScanHistory } from './components/ScanHistory';
 
 function AppContent() {
   const { user, signOut } = useAuth();
@@ -26,10 +27,10 @@ function AppContent() {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className={`bg-white w-64 fixed h-full shadow-lg transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-64'}`}>
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-8">
+        <div className="p-4 ">
+          <div className="flex items-center gap-2 mb-20 ">
             <Leaf className="h-8 w-8 text-green-600" />
-            <span className="text-xl font-semibold text-gray-900">CropGuard</span>
+            <span className="text-xl font-semibold text-gray-900">ShambaScan</span>
           </div>
           
           <nav className="space-y-1">
@@ -39,7 +40,7 @@ function AppContent() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
+                  className={`w-full flex items-center px-4 py-3 pb-10 text-sm font-medium rounded-lg transition-colors
                     ${activeTab === item.id
                       ? 'bg-green-50 text-green-600'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -123,7 +124,7 @@ function AppContent() {
             </div>
           )}
           {activeTab === 'scanner' && <Scanner user={user} />}
-          {activeTab === 'history' && <div className="p-6">Analysis History coming soon</div>}
+          {activeTab === 'history' && <ScanHistory user={user} />}
           {activeTab === 'guide' && <div className="p-6">Guide & Help coming soon</div>}
         </main>
       </div>
