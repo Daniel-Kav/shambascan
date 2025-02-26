@@ -23,7 +23,7 @@ export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalScans: 0,
     successRate: 0,
-    activePlants: 0,
+    ScannedPlants: 0,
     detectedDiseases: 0
   });
   const [scanActivity, setScanActivity] = useState<{ name: string; scans: number }[]>([]);
