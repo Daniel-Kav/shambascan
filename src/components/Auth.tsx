@@ -55,7 +55,7 @@ export function Auth({ onClose }: AuthProps) {
 
   if (isVerifying) {
     return (
-      <div className="relative">
+      <div className="relative bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
         {onClose && (
           <button
             onClick={onClose}
@@ -97,7 +97,7 @@ export function Auth({ onClose }: AuthProps) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative bg-white p-8 rounded-lg shadow-lg max-w-md mx-auto">
       {onClose && (
         <button
           onClick={onClose}
