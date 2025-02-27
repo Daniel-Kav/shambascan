@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Leaf, Activity, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { DashboardStats } from '../types';
+import type { DashboardStats } from '../types/index';
 import { ScanHistory } from './ScanHistory';
+import { AgrovetMap } from './AgrovetMap';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string; value: number | string; icon: React.ElementType }) => (
   <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -23,7 +24,7 @@ export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalScans: 0,
     successRate: 0,
-    ScannedPlants: 0,
+    activePlants: 0,
     detectedDiseases: 0
   });
   const [scanActivity, setScanActivity] = useState<{ name: string; scans: number }[]>([]);
@@ -135,6 +136,12 @@ export function Dashboard() {
       <div className="bg-white rounded-xl shadow-sm">
         <h2 className="text-lg font-semibold p-6 border-b">Analysis History</h2>
         {user && <ScanHistory user={user} />}
+      </div>
+
+      {/* Agrovet Map Section */}
+      <div className="bg-white rounded-xl shadow-sm">
+        <h2 className="text-lg font-semibold p-6 border-b">Nearby Agrovets</h2>
+        <AgrovetMap />
       </div>
     </div>
   );
