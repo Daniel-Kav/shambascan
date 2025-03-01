@@ -1,8 +1,15 @@
-import  { useEffect, useState, useRef } from 'react';
-import { GoogleMap, useLoadScript, Marker, InfoWindow, StandaloneSearchBox } from '@react-google-maps/api';
+import React, { useEffect, useState, useRef } from 'react';
+import { GoogleMap, useLoadScript, InfoWindow, StandaloneSearchBox, Marker } from '@react-google-maps/api';
 import { Search, Navigation, Star, Phone, Globe } from 'lucide-react';
 
 const libraries: ("places")[] = ["places"];
+
+// Ensure API key is properly loaded from environment variables
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+if (!GOOGLE_MAPS_API_KEY) {
+  console.error('Google Maps API key is missing. Please check your environment variables.');
+}
 
 const mapContainerStyle = {
   width: '100%',
@@ -31,21 +38,22 @@ interface Agrovet {
 
 export function AgrovetMap() {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY || '',
     libraries,
+    version: "weekly"
   });
 
-  const [center, setCenter] = useState({ lat: -1.2921, lng: 36.8219 }); // Default to Nairobi
+  const [center, setCenter] = useState({ lat: -1.2921, lng: 36.8219 });
   const [agrovets, setAgrovets] = useState<Agrovet[]>([]);
   const [selectedAgrovet, setSelectedAgrovet] = useState<Agrovet | null>(null);
   const [minRating, setMinRating] = useState(0);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   
   const mapRef = useRef<google.maps.Map>();
+  const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement>>(new Map());
   const searchBoxRef = useRef<google.maps.places.SearchBox>();
 
   useEffect(() => {
-    // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -64,19 +72,47 @@ export function AgrovetMap() {
     }
   }, []);
 
+  useEffect(() => {
+    // Clean up markers when component unmounts
+    return () => {
+      markersRef.current.forEach(marker => marker.map = null);
+      markersRef.current.clear();
+    };
+  }, []);
+
+  const createAdvancedMarker = (position: google.maps.LatLngLiteral, isUser: boolean = false) => {
+    if (!mapRef.current) return null;
+
+    const markerElement = document.createElement('div');
+    markerElement.className = isUser ? 'user-marker' : 'agrovet-marker';
+    markerElement.innerHTML = isUser 
+      ? '<div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>'
+      : '<div class="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg"></div>';
+
+    return new google.maps.marker.AdvancedMarkerElement({
+      map: mapRef.current,
+      position,
+      content: markerElement,
+    });
+  };
+
   const searchNearbyAgrovets = async (location: { lat: number; lng: number }) => {
     if (!mapRef.current) return;
 
     const service = new google.maps.places.PlacesService(mapRef.current);
     const request = {
       location: location,
-      radius: 5000, // 5km radius
+      radius: 5000,
       type: 'store',
       keyword: 'agrovet farm supplies agricultural',
     };
 
     service.nearbySearch(request, (results, status) => {
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        // Clear existing markers
+        markersRef.current.forEach(marker => marker.map = null);
+        markersRef.current.clear();
+
         const agrovetResults = results.map((result) => ({
           id: result.place_id!,
           name: result.name!,
@@ -89,6 +125,16 @@ export function AgrovetMap() {
             },
           },
         }));
+
+        // Create new markers
+        agrovetResults.forEach(agrovet => {
+          const marker = createAdvancedMarker(agrovet.geometry.location);
+          if (marker) {
+            marker.addListener('click', () => setSelectedAgrovet(agrovet));
+            markersRef.current.set(agrovet.id, marker);
+          }
+        });
+
         setAgrovets(agrovetResults);
       }
     });
@@ -123,8 +169,29 @@ export function AgrovetMap() {
     window.open(url, '_blank');
   };
 
-  if (loadError) return <div>Error loading maps</div>;
-  if (!isLoaded) return <div>Loading maps...</div>;
+  if (loadError) {
+    return (
+      <div className="p-4 text-red-600 bg-red-50 rounded-lg">
+        Error loading Google Maps: {loadError.message}
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="p-4 text-gray-600">
+        Loading Google Maps...
+      </div>
+    );
+  }
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    return (
+      <div className="p-4 text-red-600 bg-red-50 rounded-lg">
+        Error: Google Maps API key is missing. Please check your environment variables.
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
