@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { insertScanData } from '../utils/supabaseClient';
 import { supabase } from '../lib/supabase';
+import { DiseaseVideos } from './DiseaseVideos';
 
 interface ScannerProps {
   user: any;
@@ -195,48 +196,55 @@ export function Scanner({ user }: ScannerProps) {
             )}
 
             {result && (
-              <div className="mt-6 p-6 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">Analysis Results</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(result.severity)}`}>
-                    {result.severity} Severity
-                  </span>
-                </div>
+              <>
+                <div className="mt-6 p-6 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">Analysis Results</h3>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(result.severity)}`}>
+                      {result.severity} Severity
+                    </span>
+                  </div>
 
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      {result.disease === 'Healthy' ? (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <AlertTriangle className="w-5 h-5 text-orange-500" />
-                      )}
-                      <p className="text-sm text-gray-600">Diagnosis</p>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        {result.disease === 'Healthy' ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <AlertTriangle className="w-5 h-5 text-orange-500" />
+                        )}
+                        <p className="text-sm text-gray-600">Diagnosis</p>
+                      </div>
+                      <p className="font-medium mt-1">{result.disease}</p>
+                      <p className="text-sm text-gray-500 mt-1">Confidence: {result.confidence}%</p>
                     </div>
-                    <p className="font-medium mt-1">{result.disease}</p>
-                    <p className="text-sm text-gray-500 mt-1">Confidence: {result.confidence}%</p>
-                  </div>
 
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Description</p>
-                    <p className="text-gray-800">{result.description}</p>
-                  </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Description</p>
+                      <p className="text-gray-800">{result.description}</p>
+                    </div>
 
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Treatment Recommendations</p>
-                    <p className="text-gray-800">{result.treatment}</p>
-                  </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Treatment Recommendations</p>
+                      <p className="text-gray-800">{result.treatment}</p>
+                    </div>
 
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Preventive Measures</p>
-                    <ul className="list-disc pl-4 space-y-1">
-                      {result.preventiveMeasures.map((measure, index) => (
-                        <li key={index} className="text-gray-800">{measure}</li>
-                      ))}
-                    </ul>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Preventive Measures</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        {result.preventiveMeasures.map((measure, index) => (
+                          <li key={index} className="text-gray-800">{measure}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* Add YouTube video recommendations */}
+                <div className="mt-8">
+                  <DiseaseVideos diseaseName={result.disease} />
+                </div>
+              </>
             )}
           </div>
         )}
