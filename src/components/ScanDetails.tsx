@@ -1,5 +1,12 @@
-import { ArrowLeft, Star } from 'lucide-react';
+import { ArrowLeft, Star, Eye, ThumbsUp } from 'lucide-react';
 import { format } from 'date-fns';
+import { useState } from 'react';
+
+interface Video {
+  url: string;
+  title: string;
+  thumbnail: string;
+}
 
 interface Scan {
   id: string;
@@ -13,6 +20,9 @@ interface Scan {
   severity: string;
   treatment_recommendation: string;
   preventive_measures: string;
+  video_urls: string[];
+  video_titles: string[];
+  video_thumbnails: string[];
 }
 
 interface ScanDetailsProps {
@@ -20,7 +30,42 @@ interface ScanDetailsProps {
   onBack: () => void;
 }
 
+interface VideoModalProps {
+  video: Video;
+  onClose: () => void;
+}
+
+function VideoModal({ video, onClose }: VideoModalProps) {
+  const videoId = video.url.split('v=')[1];
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="font-semibold text-lg">{video.title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="aspect-video">
+          <iframe
+            width="100%"
+            height="100%"
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title={video.title}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+
   const renderStars = (score: number) => {
     const stars = [];
     const totalStars = 10;
@@ -39,6 +84,12 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
     return stars;
   };
 
+  const videos = scan.video_urls.map((url, index) => ({
+    url,
+    title: scan.video_titles[index],
+    thumbnail: scan.video_thumbnails[index]
+  }));
+
   return (
     <div className="container mx-auto p-4">
       <button
@@ -54,7 +105,7 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
           <div className="flex items-start space-x-6">
             <img
               src={scan.image_url}
-              // alt={scan.scan_name}
+              alt="Scanned plant"
               className="w-48 h-48 object-cover rounded-lg"
             />
             <div className="flex-1">
@@ -120,9 +171,45 @@ export default function ScanDetails({ scan, onBack }: ScanDetailsProps) {
                 </div>
               </div>
             </div>
+
+            {videos.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Educational Videos</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {videos.map((video, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                      <button
+                        onClick={() => setSelectedVideo(video)}
+                        className="block w-full text-left"
+                      >
+                        <div className="relative">
+                          <img
+                            src={video.thumbnail}
+                            alt={video.title}
+                            className="w-full h-48 object-cover"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-medium text-gray-900 line-clamp-2 mb-1">
+                            {video.title}
+                          </h3>
+                        </div>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {selectedVideo && (
+        <VideoModal
+          video={selectedVideo}
+          onClose={() => setSelectedVideo(null)}
+        />
+      )}
     </div>
   );
 }
