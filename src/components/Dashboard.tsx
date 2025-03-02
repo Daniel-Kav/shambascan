@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Leaf, Activity, Users } from 'lucide-react';
+import { Activity, Leaf, Users } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Scanner } from './Scanner';
+import { DetectedDiseases } from './DetectedDiseases';
 import type { DashboardStats } from '../types/index';
-import { ScanHistory } from './ScanHistory';
-import { AgrovetMap } from './AgrovetMap';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string; value: number | string; icon: React.ElementType }) => (
   <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -84,22 +84,12 @@ export function Dashboard() {
   }, []);
 
   function processActivityData(data: { created_at: string }[]): { name: string; scans: number }[] {
-    // Group scans by month
-    interface Scan {
-      created_at: string;
-    }
-
-    interface MonthlyData {
-      [key: string]: number;
-    }
-
-    const monthlyData: MonthlyData = data.reduce((acc: MonthlyData, scan: Scan) => {
+    const monthlyData = data.reduce((acc: { [key: string]: number }, scan) => {
       const month = new Date(scan.created_at).toLocaleString('default', { month: 'short' });
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {});
 
-    // Convert to chart format
     return Object.entries(monthlyData).map(([name, scans]) => ({
       name,
       scans
@@ -107,41 +97,47 @@ export function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Scans" value={stats.totalScans} icon={Activity} />
-        <StatCard title="Success Rate" value={`${stats.successRate}%`} icon={Activity} />
-        <StatCard title="Active Plants" value={stats.activePlants} icon={Leaf} />
-        <StatCard title="Detected Diseases" value={stats.detectedDiseases} icon={Users} />
-      </div>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen w-full max-w-[1920px] mx-auto">
+      {/* Analytics Section */}
+      <div className="space-y-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard title="Total Scans" value={stats.totalScans} icon={Activity} />
+          <StatCard title="Success Rate" value={`${stats.successRate.toFixed(1)}%`} icon={Activity} />
+          <StatCard title="Active Plants" value={stats.activePlants} icon={Leaf} />
+          <StatCard title="Detected Diseases" value={stats.detectedDiseases} icon={Users} />
+        </div>
 
-      {/* Activity Chart */}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Scan Activity</h2>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={scanActivity}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="scans" fill="#059669" />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Activity Chart and Diseases Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Activity Chart */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Scan Activity</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={scanActivity}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="scans" fill="#059669" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Detected Diseases */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">Detected Diseases</h2>
+            <DetectedDiseases />
+          </div>
         </div>
       </div>
 
-      {/* Scan History Section */}
-      <div className="bg-white rounded-xl shadow-sm">
-        <h2 className="text-lg font-semibold p-6 border-b">Analysis History</h2>
-        {user && <ScanHistory user={user} />}
-      </div>
-
-      {/* Agrovet Map Section */}
-      <div className="bg-white rounded-xl shadow-sm">
-        <h2 className="text-lg font-semibold p-6 border-b">Nearby Agrovets</h2>
-        <AgrovetMap />
+      {/* Scanner Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-2xl font-semibold mb-6">Upload Image</h2>
+        <Scanner user={user} />
       </div>
     </div>
   );
