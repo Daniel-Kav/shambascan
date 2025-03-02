@@ -1,6 +1,100 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Obscure the API key
+const _k = import.meta.env.VITE_GEMINI_API_KEY;
+const _e = 'https://generativelanguage.googleapis.com';
+const _v = 'v1';
+const _m = 'models';
+const _g = 'gemini-2.0-flash';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+// Helper function to convert data URL to base64
+const getBase64FromDataUrl = (dataUrl: string): string => {
+  const split = dataUrl.split(',');
+  return split.length > 1 ? split[1] : dataUrl;
+};
+
+interface APIResponse {
+  disease_name: string;
+  confidence_score: number;
+  severity: string;
+  description: string;
+  treatment_recommendations: string[];
+  preventive_measures: string[];
+}
+
+// Obscure the API call
+const _r = async (d: string) => {
+  try {
+    // Ensure we have valid base64 data
+    const base64Data = getBase64FromDataUrl(d);
+    if (!base64Data) {
+      throw new Error('Invalid image data');
+    }
+
+    const response = await fetch(`${_e}/${_v}/${_m}/${_g}:generateContent?key=${_k}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "Analyze this plant image and provide a detailed report including: disease name, confidence score (as a percentage), severity (low/medium/high), description, treatment recommendations, and preventive measures. Format the response as a JSON object with the following fields: disease_name, confidence_score, severity, description, treatment_recommendations (array), preventive_measures (array)." },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: base64Data
+              }
+            }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.2,
+          topK: 16,
+          topP: 0.8,
+          maxOutputTokens: 1024
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      console.error('API Response:', errorData);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}` +
+        (errorData ? `\nDetails: ${JSON.stringify(errorData)}` : '')
+      );
+    }
+
+    const result = await response.json();
+    if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from API');
+    }
+
+    const content = result.candidates[0].content;
+    const jsonStr = content.parts[0].text.replace(/```json\n|\n```/g, '');
+    
+    try {
+      const apiResponse = JSON.parse(jsonStr) as APIResponse;
+      
+      // Transform API response to match our PlantAnalysis interface
+      return {
+        disease: apiResponse.disease_name,
+        confidence: apiResponse.confidence_score,
+        severity: apiResponse.severity as 'Low' | 'Medium' | 'High',
+        description: apiResponse.description,
+        treatment: apiResponse.treatment_recommendations.join('\n'),
+        preventiveMeasures: apiResponse.preventive_measures
+      };
+    } catch (parseError) {
+      console.error('Failed to parse API response:', jsonStr);
+      throw new Error('Failed to parse analysis results');
+    }
+  } catch (error) {
+    console.error('Internal analysis error:', error);
+    throw new Error('Image analysis failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+  }
+};
+
+export const analyzePlantImage = _r;
 
 export interface PlantAnalysis {
   disease: string;
@@ -9,111 +103,4 @@ export interface PlantAnalysis {
   treatment: string;
   severity: 'Low' | 'Medium' | 'High';
   preventiveMeasures: string[];
-}
-
-export async function analyzePlantImage(imageBase64: string): Promise<PlantAnalysis> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-  const prompt = `You are a professional plant pathologist. Analyze this plant image and provide a detailed diagnosis.
-    Focus on identifying any diseases, pests, or nutritional deficiencies.
-    
-    Provide your analysis in the following format exactly, with no markdown formatting or bullet points:
-    {
-      "disease": "Name of the disease or 'Healthy' if no disease detected",
-      "confidence": A number between 0-100 representing your confidence level,
-      "description": "A clear, concise description of the visible symptoms and condition, in a single paragraph without any formatting",
-      "treatment": "A clear, step-by-step treatment plan in a single paragraph without any formatting or numbering",
-      "severity": "One of: Low, Medium, High",
-      "preventiveMeasures": [
-        "List of preventive measures as simple sentences",
-        "Each measure should be a complete, clear instruction",
-        "No formatting or special characters"
-      ]
-    }
-
-    Be specific and practical in your recommendations. If the plant appears healthy, 
-    still provide preventive care advice. Ensure the response is properly formatted as JSON.`;
-
-  try {
-    const result = await model.generateContent([
-      prompt,
-      { inlineData: { data: imageBase64, mimeType: 'image/jpeg' } },
-    ]);
-
-    const response = await result.response;
-
-    try {
-      // Get the text content from the response
-      const text = response.text();
-      console.log('Raw text:', text);
-
-      // Clean up the response text by removing markdown code block markers
-      const cleanedResponse = text
-        .replace(/```json\n?/g, '') // Remove opening ```json
-        .replace(/```\n?/g, '') // Remove closing ```
-        .trim();
-
-      console.log('Cleaned response:', cleanedResponse);
-
-      // Parse the cleaned response into a JSON object
-      const parsedResponse = JSON.parse(cleanedResponse);
-
-      // Clean up markdown formatting in text fields (if any)
-      const cleanMarkdown = (text: string) => {
-        return text
-          .replace(/\*\*/g, '') // Remove bold markers
-          .replace(/\*/g, '') // Remove italic markers
-          .replace(/\d+\.\s+/g, '') // Remove numbered lists
-          .replace(/[-*•]\s+/g, '') // Remove bullet points
-          .replace(/\n/g, ' ') // Replace newlines with spaces
-          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-          .trim();
-      };
-
-      // Clean up the treatment and description fields
-      parsedResponse.treatment = cleanMarkdown(parsedResponse.treatment);
-      parsedResponse.description = cleanMarkdown(parsedResponse.description);
-      parsedResponse.disease = cleanMarkdown(parsedResponse.disease);
-      parsedResponse.preventiveMeasures = parsedResponse.preventiveMeasures.map((measure: string) =>
-        cleanMarkdown(measure)
-      );
-
-      // Validate the response has all required fields
-      const requiredFields = ['disease', 'confidence', 'description', 'treatment', 'severity', 'preventiveMeasures'];
-      const missingFields = requiredFields.filter((field) => !(field in parsedResponse));
-
-      if (missingFields.length > 0) {
-        throw new Error(`Invalid response format. Missing fields: ${missingFields.join(', ')}`);
-      }
-
-      // Ensure confidence is a number between 0 and 100
-      if (typeof parsedResponse.confidence !== 'number' || parsedResponse.confidence < 0 || parsedResponse.confidence > 100) {
-        throw new Error('Invalid confidence value. Confidence must be a number between 0 and 100.');
-      }
-
-      // Ensure severity is one of the allowed values
-      const allowedSeverities = ['Low', 'Medium', 'High'];
-      if (!allowedSeverities.includes(parsedResponse.severity)) {
-        throw new Error(`Invalid severity value. Severity must be one of: ${allowedSeverities.join(', ')}`);
-      }
-
-      // Create a properly typed PlantAnalysis object
-      const analysis: PlantAnalysis = {
-        disease: parsedResponse.disease,
-        confidence: parsedResponse.confidence,
-        description: parsedResponse.description,
-        treatment: parsedResponse.treatment,
-        severity: parsedResponse.severity as 'Low' | 'Medium' | 'High',
-        preventiveMeasures: parsedResponse.preventiveMeasures
-      };
-
-      return analysis;
-    } catch (parseError) {
-      console.error('Error parsing Gemini response:', parseError);
-      throw new Error('Failed to parse analysis results. Please try again.');
-    }
-  } catch (apiError) {
-    console.error('Gemini API error:', apiError);
-    throw new Error('Failed to analyze image. Please check your internet connection and try again.');
-  }
 }
