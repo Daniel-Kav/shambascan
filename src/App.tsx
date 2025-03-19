@@ -126,6 +126,7 @@ function AppContent() {
           {activeTab === 'scanner' && <Scanner user={user} />}
           {activeTab === 'history' && <ScanHistory user={user} />}
           {activeTab === 'guide' && <div className="p-6">Guide & Help coming soon</div>}
+          {activeTab === 'Analytics' && <div className="p-6">Guide & Help coming soon</div>}
         </main>
       </div>
     </div>
