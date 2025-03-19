@@ -38,7 +38,7 @@ class AuthService {
     const response = await axios.post(`${API_URL}/register/`, {
       email,
       password,
-      username: email,  // Using email as username by default
+      username: email.split('@')[0],  // Using part before @ as username
     });
     this.handleAuthResponse(response.data);
     return response.data;
@@ -46,7 +46,7 @@ class AuthService {
 
   async signIn(email: string, password: string): Promise<AuthResponse> {
     const response = await axios.post(`${API_URL}/token/`, {
-      email,
+      username: email,  // Django JWT expects username field
       password,
     });
     this.handleAuthResponse(response.data);

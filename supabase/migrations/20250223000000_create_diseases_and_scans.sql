@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS scans (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   image_url TEXT NOT NULL,
-  disease_name TEXT,
+  disease_name TEXT REFERENCES diseases(name),
   confidence_score FLOAT,
   severity TEXT,
   description TEXT,
@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS scans (
   video_titles TEXT[] DEFAULT '{}',
   video_thumbnails TEXT[] DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  scan_time FLOAT,
   CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
