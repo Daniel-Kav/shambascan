@@ -1,10 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { auth, type Session } from '../lib/auth';
 
 type AuthContextType = {
   session: Session | null;
-  user: User | null;
+  user: Session['user'] | null;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -14,45 +13,57 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Session['user'] | null>(null);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
+    const currentSession = auth.getSession();
+    setSession(currentSession);
+    setUser(currentSession?.user ?? null);
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
+    // We could add WebSocket connection here for real-time auth state
+    // For now, we'll just check session on focus
+    const handleFocus = () => {
+      const currentSession = auth.getSession();
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+    };
 
-    return () => subscription.unsubscribe();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (error) throw error;
+    try {
+      const response = await auth.signUp(email, password);
+      setSession(auth.getSession());
+      setUser(response.user);
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
+    try {
+      const response = await auth.signIn(email, password);
+      setSession(auth.getSession());
+      setUser(response.user);
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      await auth.signOut();
+      setSession(null);
+      setUser(null);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw error;
+    }
   };
 
   return (
