@@ -10,7 +10,7 @@ from .serializers import (
     ScanSerializer, ScanCreateSerializer, DiseaseVideoSerializer,
     RegisterSerializer
 )
-from .gemini_service import analyze_plant_image
+from ._service import analyze_plant_image
 
 User = get_user_model()
 
