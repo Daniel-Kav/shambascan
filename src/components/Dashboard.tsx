@@ -50,9 +50,12 @@ export function Dashboard() {
           .not('disease_name', 'is', null);
 
         // Fetch unique diseases detected
-        const { count: uniqueDiseases } = await supabase
-          .from('diseases')
-          .select('*', { count: 'exact', head: true });
+        const { data: diseaseData } = await supabase
+          .from('scans')
+          .select('disease_name')
+          .not('disease_name', 'is', null);
+
+        const uniqueDiseases = new Set(diseaseData?.map(scan => scan.disease_name) || []).size;
 
         // Fetch active users (users with scans in last 30 days)
         const { count: activeUsers } = await supabase
@@ -109,9 +112,9 @@ export function Dashboard() {
         </div>
 
         {/* Activity Chart and Diseases Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> */}
           {/* Activity Chart */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          {/* <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">Scan Activity</h2>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -124,14 +127,14 @@ export function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </div> */}
 
           {/* Detected Diseases */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          {/* <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">Detected Diseases</h2>
             <DetectedDiseases />
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
       </div>
 
       {/* Scanner Section */}
