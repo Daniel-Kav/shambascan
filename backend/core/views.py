@@ -108,3 +108,9 @@ class ScanViewSet(viewsets.ModelViewSet):
             'successful_scans': successful_scans,
             'success_rate': round(success_rate, 2)
         })
+
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        recent_scans = Scan.objects.filter(user=request.user).order_by('-created_at')[:5]
+        serializer = self.get_serializer(recent_scans, many=True)
+        return Response(serializer.data)
